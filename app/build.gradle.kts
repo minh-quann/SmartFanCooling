@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kyant0.backdrop)
+    implementation(libs.kyant.shapes)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.android)
 

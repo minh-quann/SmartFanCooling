@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buwin.smartfancooling.data.model.FanState
-import com.buwin.smartfancooling.ui.theme.NeonCyan
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.catalog.components.LiquidSlider
 import com.kyant.backdrop.catalog.components.LiquidToggle
@@ -46,14 +45,15 @@ fun FanControlSection(
     modifier: Modifier = Modifier,
     isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
-    val textPrimary = if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF0F172A)
-    val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val textPrimary = if (isDarkTheme) Color.White else Color(0xFF1C1C1E)
+    val textSecondary = if (isDarkTheme) Color(0xFF8E8E93) else Color(0xFF8E8E93)
+    val accentBlue = if (isDarkTheme) Color(0xFF0A84FF) else Color(0xFF007AFF)
 
     LiquidGlassCard(
         backdrop = backdrop,
         modifier = modifier.fillMaxWidth(),
         contentPadding = 18.dp,
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(24.dp),
         isDarkTheme = isDarkTheme
     ) {
         Column {
@@ -69,7 +69,7 @@ fun FanControlSection(
                             .size(36.dp)
                             .clip(CircleShape)
                             .background(
-                                if (fanState.isPoweredOn) NeonCyan.copy(alpha = 0.22f)
+                                if (fanState.isPoweredOn) accentBlue.copy(alpha = 0.18f)
                                 else if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
                             ),
                         contentAlignment = Alignment.Center
@@ -77,7 +77,7 @@ fun FanControlSection(
                         Icon(
                             imageVector = if (fanState.isPoweredOn) Icons.Rounded.Toys else Icons.Rounded.ModeFanOff,
                             contentDescription = "Fan Power",
-                            tint = if (fanState.isPoweredOn) NeonCyan else textSecondary,
+                            tint = if (fanState.isPoweredOn) accentBlue else textSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -92,7 +92,7 @@ fun FanControlSection(
                         )
                         Text(
                             text = if (fanState.isPoweredOn) "${fanState.speedPercent}% Duty Cycle" else "Motor Off",
-                            color = if (fanState.isPoweredOn) NeonCyan else textSecondary,
+                            color = if (fanState.isPoweredOn) accentBlue else textSecondary,
                             fontSize = 11.sp
                         )
                     }
@@ -133,12 +133,12 @@ fun FanControlSection(
                     val isSelected = fanState.speedPercent == presetVal && fanState.isPoweredOn
 
                     val presetBg by animateColorAsState(
-                        targetValue = if (isSelected) NeonCyan.copy(alpha = 0.28f)
-                        else if (isDarkTheme) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f),
+                        targetValue = if (isSelected) accentBlue.copy(alpha = 0.22f)
+                        else if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f),
                         label = "preset_bg"
                     )
                     val presetTextColor by animateColorAsState(
-                        targetValue = if (isSelected) NeonCyan else textSecondary,
+                        targetValue = if (isSelected) accentBlue else textSecondary,
                         label = "preset_text"
                     )
 

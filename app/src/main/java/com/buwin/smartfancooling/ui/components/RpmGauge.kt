@@ -58,9 +58,9 @@ fun RpmGauge(
     size: Dp = 230.dp,
     isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
-    val textPrimary = if (isDarkTheme) Color.White else Color(0xFF0F172A)
-    val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
-    val trackBgColor = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFE2E8F0)
+    val textPrimary = if (isDarkTheme) Color.White else Color(0xFF1C1C1E)
+    val textSecondary = if (isDarkTheme) Color(0xFF8E8E93) else Color(0xFF8E8E93)
+    val trackBgColor = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
 
     val targetRatio = if (fanState.isPoweredOn) fanState.rpmRatio else 0f
     val animatedProgress by animateFloatAsState(

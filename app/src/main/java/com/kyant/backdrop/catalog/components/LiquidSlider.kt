@@ -101,9 +101,9 @@ fun LiquidSlider(
         }
         LaunchedEffect(dampedDragAnimation) {
             snapshotFlow { value() }
-                .collectLatest { v ->
-                    if (dampedDragAnimation.targetValue != v) {
-                        dampedDragAnimation.updateValue(v)
+                .collectLatest { value ->
+                    if (dampedDragAnimation.targetValue != value) {
+                        dampedDragAnimation.updateValue(value)
                     }
                 }
         }

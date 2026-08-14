@@ -25,7 +25,7 @@ fun ButtonsContent() {
             ) {
                 BasicText(
                     "Transparent Liquid Button",
-                    style = TextStyle(Color.White, 15f.sp)
+                    style = TextStyle(Color.Black, 15f.sp)
                 )
             }
             LiquidButton(
@@ -35,7 +35,7 @@ fun ButtonsContent() {
             ) {
                 BasicText(
                     "Surface Liquid Button",
-                    style = TextStyle(Color.White, 15f.sp)
+                    style = TextStyle(Color.Black, 15f.sp)
                 )
             }
             LiquidButton(

@@ -91,12 +91,12 @@ fun GlassPlaygroundContent() {
                 .pointerInput(animationScope) {
                     fun Offset.rotateBy(angle: Float): Offset {
                         val angleInRadians = angle * (PI / 180)
-                        val cosVal = cos(angleInRadians)
-                        val sinVal = sin(angleInRadians)
-                        return Offset((x * cosVal - y * sinVal).toFloat(), (x * sinVal + y * cosVal).toFloat())
+                        val cos = cos(angleInRadians)
+                        val sin = sin(angleInRadians)
+                        return Offset((x * cos - y * sin).toFloat(), (x * sin + y * cos).toFloat())
                     }
 
-                    detectTransformGestures { _, pan, gestureZoom, gestureRotate ->
+                    detectTransformGestures { centroid, pan, gestureZoom, gestureRotate ->
                         val offset = offsetAnimation.value
                         val zoom = zoomAnimation.value
                         val rotation = rotationAnimation.value

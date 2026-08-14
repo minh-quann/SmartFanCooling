@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,14 @@ import androidx.compose.ui.platform.LocalContext
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.sqrt
+
+@Immutable
+interface UISensor {
+    val gravityAngle: Float
+    val gravity: Offset
+    fun start()
+    fun stop()
+}
 
 @Composable
 fun rememberUISensor(): UISensor {
@@ -29,17 +38,6 @@ fun rememberUISensor(): UISensor {
     }
 
     return uiSensor
-}
-
-interface UISensor {
-
-    val gravityAngle: Float
-
-    val gravity: Offset
-
-    fun start()
-
-    fun stop()
 }
 
 private class UISensorImpl(context: Context) : UISensor {

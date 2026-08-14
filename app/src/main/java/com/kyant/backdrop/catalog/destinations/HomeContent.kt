@@ -1,12 +1,15 @@
 package com.kyant.backdrop.catalog.destinations
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
@@ -26,7 +29,10 @@ fun HomeContent(onNavigate: (CatalogDestination) -> Unit) {
 
     Column(
         Modifier
+            .background(if (isLightTheme) Color.White else Color.Black)
             .verticalScroll(rememberScrollState())
+            .systemBarsPadding()
+            .displayCutoutPadding()
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16f.dp)
     ) {

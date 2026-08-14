@@ -2,9 +2,13 @@ package com.kyant.backdrop.catalog.utils
 
 import android.graphics.BitmapShader
 import android.graphics.Shader
+import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.BackdropEffectScope
 import com.kyant.backdrop.asAndroidRuntimeShader
@@ -12,17 +16,20 @@ import com.kyant.backdrop.effects.runtimeShaderEffect
 import com.kyant.backdrop.isRuntimeShaderSupported
 import org.intellij.lang.annotations.Language
 
+@Composable
+fun rememberSdfShader(@DrawableRes id: Int): SdfShader {
+    val imageBitmap = ImageBitmap.imageResource(id)
+    return remember(imageBitmap) { SdfShader(imageBitmap) }
+}
+
 fun SdfShader(imageBitmap: ImageBitmap): SdfShader {
     return SdfShaderImpl(imageBitmap)
 }
 
 @Immutable
 interface SdfShader {
-
     val width: Int
-
     val height: Int
-
     fun BackdropEffectScope.apply(
         refractionHeight: Float = 48f.dp.toPx(),
         lightAngle: Float = 45f
@@ -31,7 +38,6 @@ interface SdfShader {
 
 @Immutable
 private class SdfShaderImpl(val sdfBitmap: ImageBitmap) : SdfShader {
-
     private val sdfTexture =
         BitmapShader(sdfBitmap.asAndroidBitmap(), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
 

@@ -20,23 +20,23 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 
 /**
- * Authentic Liquid Glass Container using Kyant0's Backdrop library:
+ * Pure neutral grey / monochrome Liquid Glass Container:
  * - Refractive blur & vibrancy
  * - Specular edge highlight
- * - Clean border, no heavy black drop shadows
+ * - Neutral grey surface (zero blue/cyan tint)
  */
 @Composable
 fun LiquidGlassCard(
     backdrop: Backdrop,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(26.dp),
-    contentPadding: Dp = 18.dp,
+    shape: Shape = RoundedCornerShape(24.dp),
+    contentPadding: Dp = 16.dp,
     tint: Color = Color.Unspecified,
     isDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable BoxScope.() -> Unit
 ) {
     val isLightTheme = !isDarkTheme
-    val defaultSurface = if (isLightTheme) Color.White.copy(0.75f) else Color(0xFF141721).copy(0.70f)
+    val defaultSurface = if (isLightTheme) Color.White.copy(0.85f) else Color(0xFF1E1E22).copy(0.65f)
 
     Box(
         modifier = modifier
@@ -47,18 +47,18 @@ fun LiquidGlassCard(
                     vibrancy()
                     blur(16f.dp.toPx())
                     lens(
-                        12f.dp.toPx(),
-                        24f.dp.toPx(),
+                        10f.dp.toPx(),
+                        20f.dp.toPx(),
                         chromaticAberration = false
                     )
                 },
                 highlight = {
-                    Highlight.Default.copy(alpha = if (isLightTheme) 0.5f else 0.8f)
+                    Highlight.Default.copy(alpha = if (isLightTheme) 0.4f else 0.5f)
                 },
                 innerShadow = {
                     InnerShadow(
-                        radius = 6f.dp,
-                        alpha = if (isLightTheme) 0.2f else 0.4f
+                        radius = 4f.dp,
+                        alpha = if (isLightTheme) 0.15f else 0.25f
                     )
                 },
                 onDrawSurface = {

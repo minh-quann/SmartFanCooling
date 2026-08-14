@@ -97,8 +97,8 @@ fun LiquidToggle(
     }
     LaunchedEffect(dampedDragAnimation) {
         snapshotFlow { fraction }
-            .collectLatest { f ->
-                dampedDragAnimation.updateValue(f)
+            .collectLatest { fraction ->
+                dampedDragAnimation.updateValue(fraction)
             }
     }
     LaunchedEffect(selected) {
@@ -123,8 +123,8 @@ fun LiquidToggle(
                 .layerBackdrop(trackBackdrop)
                 .clip(Capsule())
                 .drawBehind {
-                    val f = dampedDragAnimation.value
-                    drawRect(lerp(trackColor, accentColor, f))
+                    val fraction = dampedDragAnimation.value
+                    drawRect(lerp(trackColor, accentColor, fraction))
                 }
                 .size(64f.dp, 28f.dp)
         )
@@ -132,11 +132,11 @@ fun LiquidToggle(
         Box(
             Modifier
                 .graphicsLayer {
-                    val f = dampedDragAnimation.value
+                    val fraction = dampedDragAnimation.value
                     val padding = 2f.dp.toPx()
                     translationX =
-                        if (isLtr) lerp(padding, padding + dragWidth, f)
-                        else lerp(-padding, -(padding + dragWidth), f)
+                        if (isLtr) lerp(padding, padding + dragWidth, fraction)
+                        else lerp(-padding, -(padding + dragWidth), fraction)
                 }
                 .semantics {
                     role = Role.Switch

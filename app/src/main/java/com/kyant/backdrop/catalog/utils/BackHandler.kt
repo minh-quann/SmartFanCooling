@@ -1,12 +1,12 @@
 package com.kyant.backdrop.catalog.utils
 
-import androidx.activity.compose.BackHandler as AndroidBackHandler
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 
 @Composable
 fun BackHandler(
-    enabled: Boolean = true,
+    enabled: Boolean,
     onBack: () -> Unit
 ) {
-    AndroidBackHandler(enabled = enabled, onBack = onBack)
+    androidx.activity.compose.BackHandler(enabled, onBack)
 }

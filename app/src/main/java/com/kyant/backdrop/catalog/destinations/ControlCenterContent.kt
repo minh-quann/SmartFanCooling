@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -82,11 +84,11 @@ fun ControlCenterContent() {
     val safeEnterProgressAnimation = remember { Animatable(1f) }
     val progress by remember {
         derivedStateOf {
-            val p = enterProgressAnimation.value
+            val progress = enterProgressAnimation.value
             when {
-                p < 0f -> ProgressConverter.Default.convert(p)
-                p <= 1f -> p
-                else -> 1f + ProgressConverter.Default.convert(p - 1f)
+                progress < 0f -> ProgressConverter.Default.convert(progress)
+                progress <= 1f -> progress
+                else -> 1f + ProgressConverter.Default.convert(progress - 1f)
             }
         }
     }
@@ -103,40 +105,40 @@ fun ControlCenterContent() {
         )
     }
     val glassLayer: GraphicsLayerScope.() -> Unit = {
-        val p = progress
+        val progress = progress
         val safeProgress = safeEnterProgressAnimation.value
-        translationY = -48f.dp.toPx() * (1f - p)
+        translationY = -48f.dp.toPx() * (1f - progress)
         alpha = EaseIn.transform(safeProgress)
-        scaleX /= 1f + 0.1f * (p - 1f).fastCoerceAtLeast(0f)
-        scaleY *= 1f + 0.1f * (p - 1f).fastCoerceAtLeast(0f)
+        scaleX /= 1f + 0.1f * (progress - 1f).fastCoerceAtLeast(0f)
+        scaleY *= 1f + 0.1f * (progress - 1f).fastCoerceAtLeast(0f)
     }
     val glassSurface: DrawScope.() -> Unit = { drawRect(containerColor) }
     val glassEffects: BackdropEffectScope.() -> Unit = {
-        val safeProgress = safeEnterProgressAnimation.value
+        val progress = safeEnterProgressAnimation.value
         vibrancy()
         lens(
-            24f.dp.toPx() * safeProgress,
-            48f.dp.toPx() * safeProgress,
+            24f.dp.toPx() * progress,
+            48f.dp.toPx() * progress,
             depthEffect = true
         )
     }
 
     val spacerLayoutModifier = Modifier.layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
-        val p = progress
+        val progress = progress
         val height =
             itemSpacing.roundToPx() +
-                    (32f.dp.toPx() * (p - 1f).fastCoerceAtLeast(0f)).fastRoundToInt()
+                    (32f.dp.toPx() * (progress - 1f).fastCoerceAtLeast(0f)).fastRoundToInt()
         layout(constraints.minWidth, height) {
             placeable.place(0, 0)
         }
     }
     val smallSpacerLayoutModifier = Modifier.layout { measurable, constraints ->
         val placeable = measurable.measure(constraints)
-        val p = progress
+        val progress = progress
         val height =
             itemSpacing.roundToPx() +
-                    (16f.dp.toPx() * (p - 1f).fastCoerceAtLeast(0f)).fastRoundToInt()
+                    (16f.dp.toPx() * (progress - 1f).fastCoerceAtLeast(0f)).fastRoundToInt()
         layout(constraints.minWidth, height) {
             placeable.place(0, 0)
         }
@@ -147,8 +149,12 @@ fun ControlCenterContent() {
             rememberDraggableState { delta ->
                 val targetProgress = enterProgressAnimation.value + delta / maxDragHeight
                 animationScope.launch {
-                    launch { enterProgressAnimation.snapTo(targetProgress) }
-                    launch { safeEnterProgressAnimation.snapTo(targetProgress.fastCoerceIn(0f, 1f)) }
+                    launch {
+                        enterProgressAnimation.snapTo(targetProgress)
+                    }
+                    launch {
+                        safeEnterProgressAnimation.snapTo(targetProgress.fastCoerceIn(0f, 1f))
+                    }
                 }
             },
             Orientation.Vertical,
@@ -180,13 +186,15 @@ fun ControlCenterContent() {
             }
         )
         .drawWithContent {
-            val p = safeEnterProgressAnimation.value
+            val progress = safeEnterProgressAnimation.value
+
             drawContent()
-            drawRect(dimColor.copy(dimColor.alpha * p))
+            drawRect(dimColor.copy(dimColor.alpha * progress))
         }
         .graphicsLayer {
-            val p = safeEnterProgressAnimation.value
-            val blurRadius = 4f.dp.toPx() * p
+            val progress = safeEnterProgressAnimation.value
+
+            val blurRadius = 4f.dp.toPx() * progress
             if (blurRadius > 0f) {
                 renderEffect = BlurEffect(blurRadius, blurRadius)
             }
@@ -195,7 +203,9 @@ fun ControlCenterContent() {
     BackdropDemoScaffold(backdropModifier) { backdrop ->
         Column(
             Modifier
-                .padding(top = 40f.dp)
+                .padding(top = 80f.dp)
+                .systemBarsPadding()
+                .displayCutoutPadding()
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -347,6 +357,85 @@ fun ControlCenterContent() {
                             )
                             .size(itemSize, itemTwoSpanSize)
                     )
+                }
+            }
+
+            Spacer(spacerLayoutModifier)
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    Modifier
+                        .drawBackdrop(
+                            backdrop = backdrop,
+                            shape = glassShape,
+                            effects = glassEffects,
+                            highlight = glassHighlight,
+                            shadow = null,
+                            layerBlock = glassLayer,
+                            onDrawSurface = glassSurface
+                        )
+                        .size(itemTwoSpanSize)
+                )
+
+                Column {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .drawBackdrop(
+                                    backdrop = backdrop,
+                                    shape = glassShape,
+                                    effects = glassEffects,
+                                    highlight = glassHighlight,
+                                    shadow = null,
+                                    layerBlock = glassLayer,
+                                    onDrawSurface = glassSurface
+                                )
+                                .paint(airplaneModeIcon, colorFilter = iconColorFilter)
+                                .size(itemSize)
+                        )
+                        Box(
+                            Modifier
+                                .drawBackdrop(
+                                    backdrop = backdrop,
+                                    shape = glassShape,
+                                    effects = glassEffects,
+                                    highlight = glassHighlight,
+                                    shadow = null,
+                                    layerBlock = glassLayer,
+                                    onDrawSurface = glassSurface
+                                )
+                                .paint(airplaneModeIcon, colorFilter = iconColorFilter)
+                                .size(itemSize)
+                        )
+                    }
+
+                    Spacer(smallSpacerLayoutModifier)
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(itemSpacing),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .drawBackdrop(
+                                    backdrop = backdrop,
+                                    shape = glassShape,
+                                    effects = glassEffects,
+                                    highlight = glassHighlight,
+                                    shadow = null,
+                                    layerBlock = glassLayer,
+                                    onDrawSurface = glassSurface
+                                )
+                                .paint(airplaneModeIcon, colorFilter = iconColorFilter)
+                                .size(itemSize)
+                        )
+                    }
                 }
             }
         }

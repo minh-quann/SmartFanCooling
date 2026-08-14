@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val FlightIcon: ImageVector
+internal val FlightIcon: ImageVector
     get() {
         if (_FlightIcon != null) return _FlightIcon!!
 
@@ -65,3 +65,4 @@ val FlightIcon: ImageVector
     }
 
 private var _FlightIcon: ImageVector? = null
+

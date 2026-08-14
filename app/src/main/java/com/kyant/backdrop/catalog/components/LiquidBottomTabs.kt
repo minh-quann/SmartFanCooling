@@ -158,42 +158,36 @@ fun LiquidBottomTabs(
             )
         }
 
-        CompositionLocalProvider(
-            LocalLiquidBottomTabIsBackdrop provides false,
-            LocalLiquidBottomTabPillPosition provides { dampedDragAnimation.value }
-        ) {
-            Row(
-                Modifier
-                    .graphicsLayer {
-                        translationX = panelOffset
-                    }
-                    .drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { Capsule() },
-                        effects = {
-                            vibrancy()
-                            blur(8f.dp.toPx())
-                            lens(24f.dp.toPx(), 24f.dp.toPx())
-                        },
-                        layerBlock = {
-                            val progress = dampedDragAnimation.pressProgress
-                            val scale = lerp(1f, 1f + 16f.dp.toPx() / size.width, progress)
-                            scaleX = scale
-                            scaleY = scale
-                        },
-                        onDrawSurface = { drawRect(containerColor) }
-                    )
-                    .then(interactiveHighlight.modifier)
-                    .height(64f.dp)
-                    .fillMaxWidth()
-                    .padding(4f.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                content = content
-            )
-        }
+        Row(
+            Modifier
+                .graphicsLayer {
+                    translationX = panelOffset
+                }
+                .drawBackdrop(
+                    backdrop = backdrop,
+                    shape = { Capsule() },
+                    effects = {
+                        vibrancy()
+                        blur(8f.dp.toPx())
+                        lens(24f.dp.toPx(), 24f.dp.toPx())
+                    },
+                    layerBlock = {
+                        val progress = dampedDragAnimation.pressProgress
+                        val scale = lerp(1f, 1f + 16f.dp.toPx() / size.width, progress)
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                    onDrawSurface = { drawRect(containerColor) }
+                )
+                .then(interactiveHighlight.modifier)
+                .height(64f.dp)
+                .fillMaxWidth()
+                .padding(4f.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content
+        )
 
         CompositionLocalProvider(
-            LocalLiquidBottomTabIsBackdrop provides true,
             LocalLiquidBottomTabScale provides {
                 lerp(1f, 1.2f, dampedDragAnimation.pressProgress)
             }

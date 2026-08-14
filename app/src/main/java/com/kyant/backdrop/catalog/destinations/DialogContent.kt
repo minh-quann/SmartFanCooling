@@ -82,8 +82,10 @@ fun DialogContent() {
                 Modifier
                     .then(
                         if (isLightTheme) {
+                            // plus darker
                             Modifier
                         } else {
+                            // plus lighter
                             Modifier.graphicsLayer(blendMode = BlendMode.Plus)
                         }
                     )
