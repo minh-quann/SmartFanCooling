@@ -22,18 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,6 +43,8 @@ import com.buwin.smartfancooling.ui.theme.TextMuted
 import com.buwin.smartfancooling.ui.theme.TextPrimary
 import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.catalog.components.LiquidSlider
+import com.kyant.backdrop.catalog.components.LiquidToggle
 
 /**
  * RGB Lighting Studio section for mode selection, color presets, and brightness.
@@ -59,7 +56,7 @@ fun RgbControlSection(
     onColorSelect: (Color) -> Unit,
     onBrightnessChange: (Int) -> Unit,
     onPowerToggle: (Boolean) -> Unit,
-    backdrop: Backdrop? = null,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier
 ) {
     val colorPresets = listOf(
@@ -77,10 +74,10 @@ fun RgbControlSection(
         backdrop = backdrop,
         modifier = modifier.fillMaxWidth(),
         contentPadding = 18.dp,
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(26.dp)
     ) {
         Column {
-            // Header: Title & Active color indicator
+            // Header: Title & Authentic Liquid Glass Switch
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -89,10 +86,10 @@ fun RgbControlSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(36.dp)
+                            .clip(CircleShape)
                             .background(
-                                if (rgbState.isPoweredOn) NeonPurple.copy(alpha = 0.2f)
+                                if (rgbState.isPoweredOn) NeonPurple.copy(alpha = 0.22f)
                                 else Color.White.copy(alpha = 0.08f)
                             ),
                         contentAlignment = Alignment.Center
@@ -101,10 +98,10 @@ fun RgbControlSection(
                             imageVector = Icons.Rounded.AutoAwesome,
                             contentDescription = "RGB Studio",
                             tint = if (rgbState.isPoweredOn) NeonPurple else TextMuted,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(12.dp))
                     Column {
                         Text(
                             text = "RGB LIGHTING STUDIO",
@@ -121,28 +118,15 @@ fun RgbControlSection(
                     }
                 }
 
-                // Power Toggle
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (rgbState.isPoweredOn) EmeraldGreen.copy(alpha = 0.2f)
-                            else Color.White.copy(alpha = 0.08f)
-                        )
-                        .clickable { onPowerToggle(!rgbState.isPoweredOn) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PowerSettingsNew,
-                        contentDescription = "Toggle RGB",
-                        tint = if (rgbState.isPoweredOn) EmeraldGreen else TextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                // Authentic Kyant0 Liquid Glass Switch
+                LiquidToggle(
+                    selected = { rgbState.isPoweredOn },
+                    onSelect = onPowerToggle,
+                    backdrop = backdrop
+                )
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
 
             // LED Effect Modes Scrollable Row
             Text(
@@ -163,7 +147,7 @@ fun RgbControlSection(
                 items(RgbMode.entries) { mode ->
                     val isSelected = rgbState.mode == mode && rgbState.isPoweredOn
                     val bg by animateColorAsState(
-                        targetValue = if (isSelected) NeonPurple.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.06f),
+                        targetValue = if (isSelected) NeonPurple.copy(alpha = 0.32f) else Color.White.copy(alpha = 0.06f),
                         label = "mode_chip_bg"
                     )
                     val textColor by animateColorAsState(
@@ -174,12 +158,12 @@ fun RgbControlSection(
                     Box(
                         modifier = Modifier
                             .height(34.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(CircleShape)
                             .background(bg)
                             .border(
                                 width = 1.dp,
-                                color = if (isSelected) NeonPurple.copy(alpha = 0.6f) else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
+                                color = if (isSelected) NeonPurple.copy(alpha = 0.7f) else Color.Transparent,
+                                shape = CircleShape
                             )
                             .clickable(enabled = rgbState.isPoweredOn) { onModeSelect(mode) }
                             .padding(horizontal = 14.dp),
@@ -197,7 +181,7 @@ fun RgbControlSection(
 
             Spacer(Modifier.height(14.dp))
 
-            // Color Palette Presets (Active when mode supports color like Static, Breathing, Wave, Comet)
+            // Color Palette Presets
             Text(
                 text = "COLOR PALETTE",
                 color = TextSecondary,
@@ -217,12 +201,12 @@ fun RgbControlSection(
                     val isSelected = (rgbState.composeColor == color) && rgbState.isPoweredOn
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(34.dp)
                             .clip(CircleShape)
                             .background(color)
                             .border(
-                                width = if (isSelected) 2.5.dp else 1.dp,
-                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.2f),
+                                width = if (isSelected) 3.dp else 1.dp,
+                                color = if (isSelected) Color.White else Color.White.copy(alpha = 0.25f),
                                 shape = CircleShape
                             )
                             .clickable(enabled = rgbState.isPoweredOn) { onColorSelect(color) }
@@ -230,9 +214,9 @@ fun RgbControlSection(
                 }
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Brightness Slider
+            // Brightness Slider with Authentic Kyant0 LiquidSlider
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -262,19 +246,15 @@ fun RgbControlSection(
                 )
             }
 
-            Slider(
-                value = rgbState.brightness.toFloat(),
+            Spacer(Modifier.height(10.dp))
+
+            // Authentic Kyant0 LiquidSlider
+            LiquidSlider(
+                value = { rgbState.brightness.toFloat() },
                 onValueChange = { onBrightnessChange(it.toInt()) },
                 valueRange = 0f..255f,
-                enabled = rgbState.isPoweredOn,
-                colors = SliderDefaults.colors(
-                    thumbColor = NeonPurple,
-                    activeTrackColor = NeonPurple,
-                    inactiveTrackColor = Color.White.copy(alpha = 0.1f),
-                    disabledThumbColor = TextMuted,
-                    disabledActiveTrackColor = TextMuted.copy(alpha = 0.3f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+                visibilityThreshold = 1f,
+                backdrop = backdrop
             )
         }
     }

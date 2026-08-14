@@ -12,8 +12,8 @@ val AmberWarning = Color(0xFFFFAB00)
 val CrimsonAlert = Color(0xFFFF1744)
 
 // Background & Surfaces
-val BackgroundDark = Color(0xFF090D16)
-val SurfaceDark = Color(0xFF0F172A)
+val BackgroundDark = Color(0xFF000000)
+val SurfaceDark = Color(0xFF000000)
 val SurfaceGlass = Color(0x661E293B)
 val BorderGlass = Color(0x33FFFFFF)
 val TextPrimary = Color(0xFFF8FAFC)

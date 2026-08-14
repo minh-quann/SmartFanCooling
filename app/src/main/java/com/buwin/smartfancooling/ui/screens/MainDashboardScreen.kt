@@ -5,6 +5,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +27,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothSearching
+import androidx.compose.material.icons.rounded.Dashboard
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.Icon
@@ -33,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,14 +59,12 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.buwin.smartfancooling.data.model.ConnectionStatus
 import com.buwin.smartfancooling.data.model.ConnectionType
-import com.buwin.smartfancooling.ui.components.AnimatedMeshBackground
 import com.buwin.smartfancooling.ui.components.ConnectionModal
 import com.buwin.smartfancooling.ui.components.FanControlSection
 import com.buwin.smartfancooling.ui.components.LiquidGlassCard
 import com.buwin.smartfancooling.ui.components.PcTelemetrySection
 import com.buwin.smartfancooling.ui.components.RgbControlSection
 import com.buwin.smartfancooling.ui.components.RpmGauge
-import com.buwin.smartfancooling.ui.theme.BackgroundDark
 import com.buwin.smartfancooling.ui.theme.CrimsonAlert
 import com.buwin.smartfancooling.ui.theme.ElectricBlue
 import com.buwin.smartfancooling.ui.theme.EmeraldGreen
@@ -66,9 +75,13 @@ import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.buwin.smartfancooling.ui.viewmodel.SmartFanViewModel
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.catalog.MainContent
+import com.kyant.backdrop.catalog.components.LiquidBottomTab
+import com.kyant.backdrop.catalog.components.LiquidBottomTabs
+import com.kyant.backdrop.catalog.components.LiquidButton
 
 /**
- * Main dashboard screen displaying hardware telemetry, fan speed gauge, and controls.
+ * Main dashboard screen with authentic Kyant0 AndroidLiquidGlass components on pure solid black.
  */
 @Composable
 fun MainDashboardScreen(
@@ -84,9 +97,10 @@ fun MainDashboardScreen(
     val discoveredDevices by viewModel.discoveredBleDevices.collectAsState()
     val isScanning by viewModel.isBleScanning.collectAsState()
 
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
     var showConnectionModal by remember { mutableStateOf(false) }
 
-    // BLE Permission Launcher for Android 12+ (API 31+) and below
+    // BLE Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -122,18 +136,18 @@ fun MainDashboardScreen(
     }
 
     Scaffold(
-        containerColor = BackgroundDark
+        containerColor = Color.Black
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // 1. Dedicated background layer captured by backdrop
-            AnimatedMeshBackground(
-                accentColor = if (rgbState.isPoweredOn) rgbState.composeColor else NeonCyan,
+            // 1. Pure Pitch Black Background layer
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.Black)
                     .layerBackdrop(backdrop)
             )
 
@@ -163,13 +177,13 @@ fun MainDashboardScreen(
                             Spacer(Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .clip(CircleShape)
                                     .background(
                                         Brush.horizontalGradient(
-                                            listOf(NeonCyan.copy(alpha = 0.25f), NeonPurple.copy(alpha = 0.25f))
+                                            listOf(NeonCyan.copy(alpha = 0.35f), NeonPurple.copy(alpha = 0.35f))
                                         )
                                     )
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = "ESP32-S3",
@@ -181,7 +195,7 @@ fun MainDashboardScreen(
                             }
                         }
                         Text(
-                            text = "Next-Gen Cooling Ecosystem",
+                            text = "Liquid Glass Cooling Studio",
                             color = TextSecondary,
                             fontSize = 11.sp
                         )
@@ -216,8 +230,8 @@ fun MainDashboardScreen(
 
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(statusColor.copy(alpha = 0.15f))
+                            .clip(CircleShape)
+                            .background(statusColor.copy(alpha = 0.18f))
                             .clickable { showConnectionModal = true }
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -247,60 +261,304 @@ fun MainDashboardScreen(
 
                 Spacer(Modifier.height(14.dp))
 
-                // ---- Main Scrollable Content ----
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
+                // ---- Main Switchable Tabs Content ----
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 ) {
-                    // 1. Tachometer RPM Hero Card
-                    item {
-                        LiquidGlassCard(
-                            backdrop = backdrop,
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = 20.dp,
-                            shape = RoundedCornerShape(28.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                RpmGauge(
-                                    fanState = fanState,
-                                    size = 230.dp
-                                )
+                    AnimatedContent(
+                        targetState = selectedTabIndex,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        label = "tab_content_transition"
+                    ) { tabIndex ->
+                        when (tabIndex) {
+                            0 -> {
+                                // Status / Dashboard Tab
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                ) {
+                                    // 1. Tachometer RPM Hero Glass Card
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 20.dp,
+                                            shape = RoundedCornerShape(28.dp)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                RpmGauge(
+                                                    fanState = fanState,
+                                                    size = 230.dp
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // 2. PC Telemetry Section
+                                    item {
+                                        PcTelemetrySection(
+                                            pcStats = pcStats,
+                                            backdrop = backdrop
+                                        )
+                                    }
+
+                                    // 3. Quick Fan Switch
+                                    item {
+                                        FanControlSection(
+                                            fanState = fanState,
+                                            onSpeedChange = viewModel::onFanSpeedChange,
+                                            onPowerToggle = viewModel::onFanPowerToggle,
+                                            onPresetSelect = viewModel::onFanPresetSelect,
+                                            backdrop = backdrop
+                                        )
+                                    }
+                                }
+                            }
+
+                            1 -> {
+                                // Cooling / Fan Control Tab
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                ) {
+                                    item {
+                                        FanControlSection(
+                                            fanState = fanState,
+                                            onSpeedChange = viewModel::onFanSpeedChange,
+                                            onPowerToggle = viewModel::onFanPowerToggle,
+                                            onPresetSelect = viewModel::onFanPresetSelect,
+                                            backdrop = backdrop
+                                        )
+                                    }
+
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 18.dp,
+                                            shape = RoundedCornerShape(24.dp)
+                                        ) {
+                                            Column {
+                                                Text(
+                                                    text = "PWM CLOSED-LOOP CONTROL",
+                                                    color = TextPrimary,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = 0.8.sp
+                                                )
+                                                Spacer(Modifier.height(8.dp))
+                                                Text(
+                                                    text = "Tachometer feedback is synchronized with the ESP32 closed-loop PID controller for maximum cooling efficiency.",
+                                                    color = TextSecondary,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            2 -> {
+                                // Lighting / RGB Studio Tab
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                ) {
+                                    item {
+                                        RgbControlSection(
+                                            rgbState = rgbState,
+                                            onModeSelect = viewModel::onRgbModeSelect,
+                                            onColorSelect = viewModel::onRgbColorChange,
+                                            onBrightnessChange = viewModel::onRgbBrightnessChange,
+                                            onPowerToggle = viewModel::onRgbPowerToggle,
+                                            backdrop = backdrop
+                                        )
+                                    }
+                                }
+                            }
+
+                            3 -> {
+                                // Device / Connection Tab
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                ) {
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 20.dp,
+                                            shape = RoundedCornerShape(26.dp)
+                                        ) {
+                                            Column {
+                                                Text(
+                                                    text = "DEVICE CONNECTION",
+                                                    color = TextPrimary,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    letterSpacing = 0.8.sp
+                                                )
+                                                Spacer(Modifier.height(6.dp))
+                                                Text(
+                                                    text = "Connect directly to your ESP32-S3 Smart Fan Hub via Bluetooth Low Energy (BLE) or high-speed Wi-Fi WebSocket.",
+                                                    color = TextSecondary,
+                                                    fontSize = 12.sp
+                                                )
+                                                Spacer(Modifier.height(16.dp))
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    LiquidButton(
+                                                        onClick = {
+                                                            showConnectionModal = true
+                                                            requestBleAndScan()
+                                                        },
+                                                        backdrop = backdrop,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.QrCodeScanner,
+                                                            contentDescription = "Scan",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                        Spacer(Modifier.width(6.dp))
+                                                        Text(
+                                                            text = if (isScanning) "Scanning..." else "Scan BLE",
+                                                            color = Color.White,
+                                                            fontSize = 13.sp,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    }
+
+                                                    LiquidButton(
+                                                        onClick = { viewModel.toggleDemoSimulation() },
+                                                        backdrop = backdrop,
+                                                        tint = NeonPurple,
+                                                        modifier = Modifier.weight(1f)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.Sensors,
+                                                            contentDescription = "Demo",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                        Spacer(Modifier.width(6.dp))
+                                                        Text(
+                                                            text = "Demo Mode",
+                                                            color = Color.White,
+                                                            fontSize = 13.sp,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            4 -> {
+                                // Full Kyant0 Backdrop Catalog Showcase!
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(bottom = 80.dp)
+                                ) {
+                                    MainContent()
+                                }
                             }
                         }
                     }
+                }
+            }
 
-                    // 2. PC Telemetry Section
-                    item {
-                        PcTelemetrySection(
-                            pcStats = pcStats,
-                            backdrop = backdrop
+            // 3. Refined Kyant0 LiquidBottomTabs (5 Tabs)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 14.dp)
+            ) {
+                LiquidBottomTabs(
+                    selectedTabIndex = { selectedTabIndex },
+                    onTabSelected = { selectedTabIndex = it },
+                    backdrop = backdrop,
+                    tabsCount = 5
+                ) {
+                    LiquidBottomTab(onClick = { selectedTabIndex = 0 }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Dashboard,
+                            contentDescription = "Status",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Status",
+                            fontSize = 9.sp,
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
                         )
                     }
 
-                    // 3. Fan Speed Controller Section
-                    item {
-                        FanControlSection(
-                            fanState = fanState,
-                            onSpeedChange = viewModel::onFanSpeedChange,
-                            onPowerToggle = viewModel::onFanPowerToggle,
-                            onPresetSelect = viewModel::onFanPresetSelect,
-                            backdrop = backdrop
+                    LiquidBottomTab(onClick = { selectedTabIndex = 1 }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Toys,
+                            contentDescription = "Cooling",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Cooling",
+                            fontSize = 9.sp,
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
                         )
                     }
 
-                    // 4. RGB Lighting Studio Section
-                    item {
-                        RgbControlSection(
-                            rgbState = rgbState,
-                            onModeSelect = viewModel::onRgbModeSelect,
-                            onColorSelect = viewModel::onRgbColorChange,
-                            onBrightnessChange = viewModel::onRgbBrightnessChange,
-                            onPowerToggle = viewModel::onRgbPowerToggle,
-                            backdrop = backdrop
+                    LiquidBottomTab(onClick = { selectedTabIndex = 2 }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Palette,
+                            contentDescription = "Lighting",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Lighting",
+                            fontSize = 9.sp,
+                            fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+
+                    LiquidBottomTab(onClick = { selectedTabIndex = 3 }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Bluetooth,
+                            contentDescription = "Device",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Device",
+                            fontSize = 9.sp,
+                            fontWeight = if (selectedTabIndex == 3) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+
+                    LiquidBottomTab(onClick = { selectedTabIndex = 4 }) {
+                        Icon(
+                            imageVector = Icons.Rounded.AutoAwesome,
+                            contentDescription = "Catalog",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "Catalog",
+                            fontSize = 9.sp,
+                            fontWeight = if (selectedTabIndex == 4) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }

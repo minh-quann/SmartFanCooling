@@ -17,13 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ModeFanOff
-import androidx.compose.material.icons.rounded.PowerSettingsNew
 import androidx.compose.material.icons.rounded.Toys
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,17 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buwin.smartfancooling.data.model.FanState
-import com.buwin.smartfancooling.ui.theme.CrimsonAlert
-import com.buwin.smartfancooling.ui.theme.ElectricBlue
-import com.buwin.smartfancooling.ui.theme.EmeraldGreen
 import com.buwin.smartfancooling.ui.theme.NeonCyan
 import com.buwin.smartfancooling.ui.theme.TextMuted
 import com.buwin.smartfancooling.ui.theme.TextPrimary
 import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.catalog.components.LiquidSlider
+import com.kyant.backdrop.catalog.components.LiquidToggle
 
 /**
- * Fan control section with power toggle, PWM slider, and quick presets.
+ * Fan control section with authentic Kyant0 LiquidToggle and LiquidSlider.
  */
 @Composable
 fun FanControlSection(
@@ -53,17 +47,17 @@ fun FanControlSection(
     onSpeedChange: (Int) -> Unit,
     onPowerToggle: (Boolean) -> Unit,
     onPresetSelect: (Int) -> Unit,
-    backdrop: Backdrop? = null,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier
 ) {
     LiquidGlassCard(
         backdrop = backdrop,
         modifier = modifier.fillMaxWidth(),
         contentPadding = 18.dp,
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(26.dp)
     ) {
         Column {
-            // Header: Title & Power Switch
+            // Header: Title & Authentic Liquid Glass Switch
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -72,10 +66,10 @@ fun FanControlSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(36.dp)
+                            .clip(CircleShape)
                             .background(
-                                if (fanState.isPoweredOn) NeonCyan.copy(alpha = 0.18f)
+                                if (fanState.isPoweredOn) NeonCyan.copy(alpha = 0.22f)
                                 else Color.White.copy(alpha = 0.08f)
                             ),
                         contentAlignment = Alignment.Center
@@ -84,10 +78,10 @@ fun FanControlSection(
                             imageVector = if (fanState.isPoweredOn) Icons.Rounded.Toys else Icons.Rounded.ModeFanOff,
                             contentDescription = "Fan Power",
                             tint = if (fanState.isPoweredOn) NeonCyan else TextMuted,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(12.dp))
                     Column {
                         Text(
                             text = "FAN SPEED CONTROL",
@@ -104,46 +98,26 @@ fun FanControlSection(
                     }
                 }
 
-                // Power toggle button
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (fanState.isPoweredOn) EmeraldGreen.copy(alpha = 0.2f)
-                            else CrimsonAlert.copy(alpha = 0.15f)
-                        )
-                        .clickable { onPowerToggle(!fanState.isPoweredOn) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PowerSettingsNew,
-                        contentDescription = "Toggle Power",
-                        tint = if (fanState.isPoweredOn) EmeraldGreen else CrimsonAlert,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                // Authentic Kyant0 Liquid Glass Switch
+                LiquidToggle(
+                    selected = { fanState.isPoweredOn },
+                    onSelect = onPowerToggle,
+                    backdrop = backdrop
+                )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
 
-            // Speed Slider
-            Slider(
-                value = fanState.speedPercent.toFloat(),
+            // Authentic Kyant0 Liquid Glass Slider
+            LiquidSlider(
+                value = { fanState.speedPercent.toFloat() },
                 onValueChange = { onSpeedChange(it.toInt()) },
                 valueRange = 0f..100f,
-                enabled = fanState.isPoweredOn,
-                colors = SliderDefaults.colors(
-                    thumbColor = NeonCyan,
-                    activeTrackColor = NeonCyan,
-                    inactiveTrackColor = Color.White.copy(alpha = 0.1f),
-                    disabledThumbColor = TextMuted,
-                    disabledActiveTrackColor = TextMuted.copy(alpha = 0.3f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+                visibilityThreshold = 1f,
+                backdrop = backdrop
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
 
             // Presets row: Quiet (30%), Balanced (60%), Gaming (85%), Max (100%)
             Row(
@@ -200,7 +174,7 @@ private fun PresetPill(
         targetValue = when {
             !enabled -> Color.White.copy(alpha = 0.04f)
             isSelected -> NeonCyan.copy(alpha = 0.25f)
-            else -> Color.White.copy(alpha = 0.06f)
+            else -> Color.White.copy(alpha = 0.07f)
         },
         label = "preset_bg"
     )
@@ -216,8 +190,8 @@ private fun PresetPill(
 
     Box(
         modifier = modifier
-            .height(34.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .height(36.dp)
+            .clip(CircleShape)
             .background(bgColor)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center

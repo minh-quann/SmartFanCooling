@@ -1,16 +1,12 @@
 package com.buwin.smartfancooling.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
@@ -20,65 +16,63 @@ import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.InnerShadow
+import com.kyant.backdrop.shadow.Shadow
 
 /**
- * Liquid Glass container using Kyant0's Backdrop library with refractive blur,
- * specular highlight border, and subtle inner glow.
+ * Authentic Liquid Glass Container using Kyant0's Backdrop library:
+ * - Refractive blur & vibrancy
+ * - Chromatic aberration lens
+ * - Specular edge highlight
+ * - Outer and inner shadows
  */
 @Composable
 fun LiquidGlassCard(
+    backdrop: Backdrop,
     modifier: Modifier = Modifier,
-    backdrop: Backdrop? = null,
-    shape: Shape = RoundedCornerShape(24.dp),
-    borderWidth: Dp = 1.dp,
-    tintColor: Color = Color(0xFF131C2E).copy(alpha = 0.55f),
-    highlightColor: Color = Color.White.copy(alpha = 0.25f),
-    contentPadding: Dp = 16.dp,
+    shape: Shape = RoundedCornerShape(26.dp),
+    contentPadding: Dp = 18.dp,
+    tint: Color = Color.Unspecified,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val glassBorderBrush = Brush.verticalGradient(
-        colors = listOf(
-            highlightColor,
-            Color.White.copy(alpha = 0.04f),
-            Color.White.copy(alpha = 0.08f)
-        )
-    )
+    val isLightTheme = !isSystemInDarkTheme()
+    val defaultSurface = if (isLightTheme) Color.Black.copy(0.04f) else Color.White.copy(0.06f)
 
-    val baseModifier = if (backdrop != null) {
-        modifier
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                ambientColor = Color.Black.copy(alpha = 0.4f),
-                spotColor = Color.Black.copy(alpha = 0.6f)
-            )
+    Box(
+        modifier = modifier
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
                     vibrancy()
-                    blur(16.dp.toPx())
-                    lens(16.dp.toPx(), 32.dp.toPx())
+                    blur(16f.dp.toPx())
+                    lens(
+                        20f.dp.toPx(),
+                        40f.dp.toPx(),
+                        chromaticAberration = true
+                    )
+                },
+                highlight = {
+                    Highlight.Default.copy(alpha = if (isLightTheme) 0.6f else 0.85f)
+                },
+                shadow = {
+                    Shadow(
+                        radius = 16f.dp,
+                        color = Color.Black.copy(alpha = 0.55f)
+                    )
+                },
+                innerShadow = {
+                    InnerShadow(
+                        radius = 8f.dp,
+                        alpha = if (isLightTheme) 0.35f else 0.55f
+                    )
+                },
+                onDrawSurface = {
+                    drawRect(if (tint != Color.Unspecified) tint else defaultSurface)
                 }
             )
-            .clip(shape)
-            .background(tintColor)
-            .border(borderWidth, glassBorderBrush, shape)
-    } else {
-        modifier
-            .shadow(
-                elevation = 12.dp,
-                shape = shape,
-                ambientColor = Color.Black.copy(alpha = 0.4f),
-                spotColor = Color.Black.copy(alpha = 0.6f)
-            )
-            .clip(shape)
-            .background(tintColor)
-            .border(borderWidth, glassBorderBrush, shape)
-    }
-
-    Box(
-        modifier = baseModifier.padding(contentPadding),
+            .padding(contentPadding),
         content = content
     )
 }

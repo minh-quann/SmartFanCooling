@@ -46,7 +46,7 @@ import com.kyant.backdrop.Backdrop
 @Composable
 fun PcTelemetrySection(
     pcStats: PcStats,
-    backdrop: Backdrop? = null,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -81,7 +81,7 @@ fun HardwareStatCard(
     temp: Float,
     loadPercent: Float,
     icon: ImageVector,
-    backdrop: Backdrop? = null,
+    backdrop: Backdrop,
     modifier: Modifier = Modifier
 ) {
     val heatColor = when {
