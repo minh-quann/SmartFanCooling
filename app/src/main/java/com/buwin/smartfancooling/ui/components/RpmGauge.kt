@@ -10,6 +10,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +45,6 @@ import com.buwin.smartfancooling.ui.theme.ElectricBlue
 import com.buwin.smartfancooling.ui.theme.EmeraldGreen
 import com.buwin.smartfancooling.ui.theme.NeonCyan
 import com.buwin.smartfancooling.ui.theme.TextMuted
-import com.buwin.smartfancooling.ui.theme.TextPrimary
-import com.buwin.smartfancooling.ui.theme.TextSecondary
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -56,8 +55,13 @@ import kotlin.math.sin
 fun RpmGauge(
     fanState: FanState,
     modifier: Modifier = Modifier,
-    size: Dp = 230.dp
+    size: Dp = 230.dp,
+    isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
+    val textPrimary = if (isDarkTheme) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val trackBgColor = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFE2E8F0)
+
     val targetRatio = if (fanState.isPoweredOn) fanState.rpmRatio else 0f
     val animatedProgress by animateFloatAsState(
         targetValue = targetRatio,
@@ -98,104 +102,95 @@ fun RpmGauge(
             val arcTopLeft = Offset(centerOffset.x - trackRadius, centerOffset.y - trackRadius)
 
             val startAngle = 135f
-            val totalSweep = 270f
-            val currentSweep = totalSweep * animatedProgress
+            val sweepAngleTotal = 270f
 
-            // 1. Background Track
+            // 1. Background Arc Track
             drawArc(
-                color = Color(0xFF1E293B).copy(alpha = 0.6f),
+                color = trackBgColor,
                 startAngle = startAngle,
-                sweepAngle = totalSweep,
+                sweepAngle = sweepAngleTotal,
                 useCenter = false,
                 topLeft = arcTopLeft,
                 size = arcSize,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
 
-            // 2. Tick marks
-            val tickCount = 9
-            for (i in 0 until tickCount) {
-                val tickFraction = i.toFloat() / (tickCount - 1)
-                val angleDeg = startAngle + tickFraction * totalSweep
-                val angleRad = Math.toRadians(angleDeg.toDouble())
-                val innerR = trackRadius - 16.dp.toPx()
-                val outerR = trackRadius - 8.dp.toPx()
+            // 2. Active Progress Arc
+            if (animatedProgress > 0f) {
+                val progressSweep = sweepAngleTotal * animatedProgress.coerceIn(0.01f, 1f)
 
-                val p1 = Offset(
-                    (centerOffset.x + innerR * cos(angleRad)).toFloat(),
-                    (centerOffset.y + innerR * sin(angleRad)).toFloat()
-                )
-                val p2 = Offset(
-                    (centerOffset.x + outerR * cos(angleRad)).toFloat(),
-                    (centerOffset.y + outerR * sin(angleRad)).toFloat()
-                )
-
-                val isPassed = tickFraction <= animatedProgress
-                val tickColor = if (isPassed) NeonCyan.copy(alpha = 0.8f) else Color.White.copy(alpha = 0.15f)
-                drawLine(
-                    color = tickColor,
-                    start = p1,
-                    end = p2,
-                    strokeWidth = if (i % 2 == 0) 3.dp.toPx() else 1.5.dp.toPx(),
-                    cap = StrokeCap.Round
-                )
-            }
-
-            // 3. Active Progress Arc with Dynamic Gradient
-            if (currentSweep > 0f) {
-                val gradient = Brush.sweepGradient(
-                    colors = listOf(
-                        NeonCyan,
+                val gradientBrush = Brush.sweepGradient(
+                    listOf(
                         ElectricBlue,
+                        NeonCyan,
+                        EmeraldGreen,
                         AmberWarning,
-                        CrimsonAlert,
-                        NeonCyan
+                        CrimsonAlert
                     ),
                     center = centerOffset
                 )
 
-                drawArc(
-                    brush = gradient,
-                    startAngle = startAngle,
-                    sweepAngle = currentSweep,
-                    useCenter = false,
-                    topLeft = arcTopLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                rotate(degrees = 0f, pivot = centerOffset) {
+                    drawArc(
+                        brush = gradientBrush,
+                        startAngle = startAngle,
+                        sweepAngle = progressSweep,
+                        useCenter = false,
+                        topLeft = arcTopLeft,
+                        size = arcSize,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+                }
+            }
+
+            // 3. Tick Marks
+            val numTicks = 19
+            val tickSweepStep = sweepAngleTotal / (numTicks - 1)
+            for (i in 0 until numTicks) {
+                val tickAngle = Math.toRadians((startAngle + i * tickSweepStep).toDouble())
+                val isMajor = i % 3 == 0
+                val tickLen = if (isMajor) 10.dp.toPx() else 5.dp.toPx()
+                val tickInnerRadius = trackRadius - strokeWidth / 2 - 4.dp.toPx()
+                val tickOuterRadius = tickInnerRadius - tickLen
+
+                val p1 = Offset(
+                    (centerOffset.x + tickInnerRadius * cos(tickAngle)).toFloat(),
+                    (centerOffset.y + tickInnerRadius * sin(tickAngle)).toFloat()
+                )
+                val p2 = Offset(
+                    (centerOffset.x + tickOuterRadius * cos(tickAngle)).toFloat(),
+                    (centerOffset.y + tickOuterRadius * sin(tickAngle)).toFloat()
                 )
 
-                // Glowing pointer cap at current angle
-                val headAngleRad = Math.toRadians((startAngle + currentSweep).toDouble())
-                val headPos = Offset(
-                    (centerOffset.x + trackRadius * cos(headAngleRad)).toFloat(),
-                    (centerOffset.y + trackRadius * sin(headAngleRad)).toFloat()
-                )
+                val isActive = (i.toFloat() / (numTicks - 1)) <= animatedProgress
+                val tickColor = when {
+                    !fanState.isPoweredOn -> if (isDarkTheme) Color(0xFF334155) else Color(0xFFCBD5E1)
+                    isActive -> NeonCyan.copy(alpha = if (isMajor) 0.95f else 0.6f)
+                    else -> if (isDarkTheme) Color(0xFF334155) else Color(0xFFCBD5E1)
+                }
 
-                drawCircle(
-                    color = Color.White,
-                    radius = strokeWidth * 0.45f,
-                    center = headPos
-                )
-                drawCircle(
-                    color = NeonCyan.copy(alpha = 0.45f),
-                    radius = strokeWidth * 0.9f,
-                    center = headPos
+                drawLine(
+                    color = tickColor,
+                    start = p1,
+                    end = p2,
+                    strokeWidth = if (isMajor) 2.5.dp.toPx() else 1.5.dp.toPx(),
+                    cap = StrokeCap.Round
                 )
             }
 
-            // 4. Subtle center fan rotating blade icon
-            if (fanState.isPoweredOn && animatedProgress > 0.05f) {
-                rotate(spinAngle, centerOffset) {
-                    val bladeRadius = 28.dp.toPx()
-                    for (b in 0 until 3) {
-                        val bladeAngle = b * 120.0
-                        val bRad = Math.toRadians(bladeAngle)
+            // 4. Rotating Fan Blades
+            if (fanState.isPoweredOn && animatedProgress > 0f) {
+                rotate(degrees = spinAngle, pivot = centerOffset) {
+                    val bladeRadius = 26.dp.toPx()
+                    val bladeCount = 5
+                    for (b in 0 until bladeCount) {
+                        val angle = Math.toRadians((b * (360f / bladeCount)).toDouble())
                         val tip = Offset(
-                            (centerOffset.x + bladeRadius * cos(bRad)).toFloat(),
-                            (centerOffset.y + bladeRadius * sin(bRad)).toFloat()
+                            (centerOffset.x + bladeRadius * cos(angle)).toFloat(),
+                            (centerOffset.y + bladeRadius * sin(angle)).toFloat()
                         )
                         drawLine(
-                            color = NeonCyan.copy(alpha = 0.25f),
+                            color = NeonCyan.copy(alpha = 0.35f),
                             start = centerOffset,
                             end = tip,
                             strokeWidth = 4.dp.toPx(),
@@ -241,7 +236,7 @@ fun RpmGauge(
             // Main RPM number
             Text(
                 text = String.format("%,d", animatedRpm),
-                color = TextPrimary,
+                color = textPrimary,
                 fontSize = 38.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.SansSerif,
@@ -250,7 +245,7 @@ fun RpmGauge(
 
             Text(
                 text = "RPM",
-                color = TextSecondary,
+                color = textSecondary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 2.sp

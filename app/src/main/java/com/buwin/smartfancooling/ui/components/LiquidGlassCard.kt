@@ -18,14 +18,12 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
 
 /**
  * Authentic Liquid Glass Container using Kyant0's Backdrop library:
  * - Refractive blur & vibrancy
- * - Chromatic aberration lens
  * - Specular edge highlight
- * - Outer and inner shadows
+ * - Clean border, no heavy black drop shadows
  */
 @Composable
 fun LiquidGlassCard(
@@ -34,10 +32,11 @@ fun LiquidGlassCard(
     shape: Shape = RoundedCornerShape(26.dp),
     contentPadding: Dp = 18.dp,
     tint: Color = Color.Unspecified,
+    isDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable BoxScope.() -> Unit
 ) {
-    val isLightTheme = !isSystemInDarkTheme()
-    val defaultSurface = if (isLightTheme) Color.Black.copy(0.04f) else Color.White.copy(0.06f)
+    val isLightTheme = !isDarkTheme
+    val defaultSurface = if (isLightTheme) Color.White.copy(0.75f) else Color(0xFF141721).copy(0.70f)
 
     Box(
         modifier = modifier
@@ -48,24 +47,18 @@ fun LiquidGlassCard(
                     vibrancy()
                     blur(16f.dp.toPx())
                     lens(
-                        20f.dp.toPx(),
-                        40f.dp.toPx(),
-                        chromaticAberration = true
+                        12f.dp.toPx(),
+                        24f.dp.toPx(),
+                        chromaticAberration = false
                     )
                 },
                 highlight = {
-                    Highlight.Default.copy(alpha = if (isLightTheme) 0.6f else 0.85f)
-                },
-                shadow = {
-                    Shadow(
-                        radius = 16f.dp,
-                        color = Color.Black.copy(alpha = 0.55f)
-                    )
+                    Highlight.Default.copy(alpha = if (isLightTheme) 0.5f else 0.8f)
                 },
                 innerShadow = {
                     InnerShadow(
-                        radius = 8f.dp,
-                        alpha = if (isLightTheme) 0.35f else 0.55f
+                        radius = 6f.dp,
+                        alpha = if (isLightTheme) 0.2f else 0.4f
                     )
                 },
                 onDrawSurface = {

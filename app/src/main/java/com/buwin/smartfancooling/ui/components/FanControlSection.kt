@@ -3,6 +3,7 @@ package com.buwin.smartfancooling.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,16 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buwin.smartfancooling.data.model.FanState
 import com.buwin.smartfancooling.ui.theme.NeonCyan
-import com.buwin.smartfancooling.ui.theme.TextMuted
-import com.buwin.smartfancooling.ui.theme.TextPrimary
-import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.catalog.components.LiquidSlider
 import com.kyant.backdrop.catalog.components.LiquidToggle
 
-/**
- * Fan control section with authentic Kyant0 LiquidToggle and LiquidSlider.
- */
 @Composable
 fun FanControlSection(
     fanState: FanState,
@@ -48,13 +43,18 @@ fun FanControlSection(
     onPowerToggle: (Boolean) -> Unit,
     onPresetSelect: (Int) -> Unit,
     backdrop: Backdrop,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
+    val textPrimary = if (isDarkTheme) Color(0xFFFFFFFF) else Color(0xFF0F172A)
+    val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
+
     LiquidGlassCard(
         backdrop = backdrop,
         modifier = modifier.fillMaxWidth(),
         contentPadding = 18.dp,
-        shape = RoundedCornerShape(26.dp)
+        shape = RoundedCornerShape(26.dp),
+        isDarkTheme = isDarkTheme
     ) {
         Column {
             // Header: Title & Authentic Liquid Glass Switch
@@ -70,14 +70,14 @@ fun FanControlSection(
                             .clip(CircleShape)
                             .background(
                                 if (fanState.isPoweredOn) NeonCyan.copy(alpha = 0.22f)
-                                else Color.White.copy(alpha = 0.08f)
+                                else if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (fanState.isPoweredOn) Icons.Rounded.Toys else Icons.Rounded.ModeFanOff,
                             contentDescription = "Fan Power",
-                            tint = if (fanState.isPoweredOn) NeonCyan else TextMuted,
+                            tint = if (fanState.isPoweredOn) NeonCyan else textSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -85,30 +85,30 @@ fun FanControlSection(
                     Column {
                         Text(
                             text = "FAN SPEED CONTROL",
-                            color = TextPrimary,
+                            color = textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
                         )
                         Text(
                             text = if (fanState.isPoweredOn) "${fanState.speedPercent}% Duty Cycle" else "Motor Off",
-                            color = if (fanState.isPoweredOn) NeonCyan else TextSecondary,
+                            color = if (fanState.isPoweredOn) NeonCyan else textSecondary,
                             fontSize = 11.sp
                         )
                     }
                 }
 
-                // Authentic Kyant0 Liquid Glass Switch
+                // Kyant0 Liquid Toggle Switch
                 LiquidToggle(
                     selected = { fanState.isPoweredOn },
-                    onSelect = onPowerToggle,
+                    onSelect = { onPowerToggle(it) },
                     backdrop = backdrop
                 )
             }
 
             Spacer(Modifier.height(18.dp))
 
-            // Authentic Kyant0 Liquid Glass Slider
+            // Kyant0 Liquid Slider
             LiquidSlider(
                 value = { fanState.speedPercent.toFloat() },
                 onValueChange = { onSpeedChange(it.toInt()) },
@@ -117,90 +117,49 @@ fun FanControlSection(
                 backdrop = backdrop
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
 
-            // Presets row: Quiet (30%), Balanced (60%), Gaming (85%), Max (100%)
+            // Quick Preset Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                PresetPill(
-                    label = "Quiet",
-                    percent = 30,
-                    isSelected = fanState.speedPercent == 30,
-                    enabled = fanState.isPoweredOn,
-                    onClick = { onPresetSelect(30) },
-                    modifier = Modifier.weight(1f)
-                )
-                PresetPill(
-                    label = "Bal",
-                    percent = 60,
-                    isSelected = fanState.speedPercent == 60,
-                    enabled = fanState.isPoweredOn,
-                    onClick = { onPresetSelect(60) },
-                    modifier = Modifier.weight(1f)
-                )
-                PresetPill(
-                    label = "Game",
-                    percent = 85,
-                    isSelected = fanState.speedPercent == 85,
-                    enabled = fanState.isPoweredOn,
-                    onClick = { onPresetSelect(85) },
-                    modifier = Modifier.weight(1f)
-                )
-                PresetPill(
-                    label = "Max",
-                    percent = 100,
-                    isSelected = fanState.speedPercent == 100,
-                    enabled = fanState.isPoweredOn,
-                    onClick = { onPresetSelect(100) },
-                    modifier = Modifier.weight(1f)
-                )
+                listOf(
+                    "Quiet" to 30,
+                    "Bal" to 60,
+                    "Game" to 85,
+                    "Max" to 100
+                ).forEach { (label, presetVal) ->
+                    val isSelected = fanState.speedPercent == presetVal && fanState.isPoweredOn
+
+                    val presetBg by animateColorAsState(
+                        targetValue = if (isSelected) NeonCyan.copy(alpha = 0.28f)
+                        else if (isDarkTheme) Color.White.copy(alpha = 0.06f) else Color.Black.copy(alpha = 0.04f),
+                        label = "preset_bg"
+                    )
+                    val presetTextColor by animateColorAsState(
+                        targetValue = if (isSelected) NeonCyan else textSecondary,
+                        label = "preset_text"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(34.dp)
+                            .clip(CircleShape)
+                            .background(presetBg)
+                            .clickable { onPresetSelect(presetVal) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$label (${presetVal}%)",
+                            color = presetTextColor,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
             }
         }
-    }
-}
-
-@Composable
-private fun PresetPill(
-    label: String,
-    percent: Int,
-    isSelected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val bgColor by animateColorAsState(
-        targetValue = when {
-            !enabled -> Color.White.copy(alpha = 0.04f)
-            isSelected -> NeonCyan.copy(alpha = 0.25f)
-            else -> Color.White.copy(alpha = 0.07f)
-        },
-        label = "preset_bg"
-    )
-
-    val textColor by animateColorAsState(
-        targetValue = when {
-            !enabled -> TextMuted
-            isSelected -> NeonCyan
-            else -> TextSecondary
-        },
-        label = "preset_text"
-    )
-
-    Box(
-        modifier = modifier
-            .height(36.dp)
-            .clip(CircleShape)
-            .background(bgColor)
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "$label ($percent%)",
-            color = textColor,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-        )
     }
 }

@@ -9,8 +9,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,15 +29,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.buwin.smartfancooling.R
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothSearching
-import androidx.compose.material.icons.rounded.Dashboard
-import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Sensors
-import androidx.compose.material.icons.rounded.Toys
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.Icon
@@ -43,16 +53,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,25 +86,43 @@ import com.buwin.smartfancooling.ui.theme.ElectricBlue
 import com.buwin.smartfancooling.ui.theme.EmeraldGreen
 import com.buwin.smartfancooling.ui.theme.NeonCyan
 import com.buwin.smartfancooling.ui.theme.NeonPurple
-import com.buwin.smartfancooling.ui.theme.TextPrimary
-import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.buwin.smartfancooling.ui.viewmodel.SmartFanViewModel
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.catalog.MainContent
+import com.kyant.backdrop.catalog.FlightIcon
 import com.kyant.backdrop.catalog.components.LiquidBottomTab
 import com.kyant.backdrop.catalog.components.LiquidBottomTabs
 import com.kyant.backdrop.catalog.components.LiquidButton
+import com.kyant.backdrop.catalog.components.LiquidSlider
+import com.kyant.backdrop.catalog.components.LiquidToggle
 
-/**
- * Main dashboard screen with authentic Kyant0 AndroidLiquidGlass components on pure solid black.
- */
+enum class AppThemeMode {
+    SYSTEM, LIGHT, DARK
+}
+
 @Composable
 fun MainDashboardScreen(
     viewModel: SmartFanViewModel
 ) {
     val context = LocalContext.current
-    val backdrop = rememberLayerBackdrop()
+    val systemDark = isSystemInDarkTheme()
+
+    var themeMode by rememberSaveable { mutableStateOf(AppThemeMode.SYSTEM) }
+    var autoPidControl by rememberSaveable { mutableStateOf(true) }
+    var overheatAlarmTemp by rememberSaveable { mutableFloatStateOf(80f) }
+    var refreshRateHz by rememberSaveable { mutableFloatStateOf(20f) }
+
+    val isDark = when (themeMode) {
+        AppThemeMode.SYSTEM -> systemDark
+        AppThemeMode.LIGHT -> false
+        AppThemeMode.DARK -> true
+    }
+
+    val bgColor = if (isDark) Color(0xFF000000) else Color(0xFFEFF2F6)
+    val textPrimaryColor = if (isDark) Color(0xFFFFFFFF) else Color(0xFF0F172A)
+    val textSecondaryColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
+
+    val backgroundBackdrop = rememberLayerBackdrop()
 
     val fanState by viewModel.fanState.collectAsState()
     val rgbState by viewModel.rgbState.collectAsState()
@@ -97,10 +131,9 @@ fun MainDashboardScreen(
     val discoveredDevices by viewModel.discoveredBleDevices.collectAsState()
     val isScanning by viewModel.isBleScanning.collectAsState()
 
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     var showConnectionModal by remember { mutableStateOf(false) }
 
-    // BLE Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -136,30 +169,30 @@ fun MainDashboardScreen(
     }
 
     Scaffold(
-        containerColor = Color.Black
+        containerColor = bgColor
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // 1. Pure Pitch Black Background layer
+            // Background Backdrop source layer (captures background for glass refraction)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black)
-                    .layerBackdrop(backdrop)
+                    .background(bgColor)
+                    .layerBackdrop(backgroundBackdrop)
             )
 
-            // 2. Foreground Glass UI
+            // Foreground Content lives as a sibling to the backdrop source
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
 
-                // ---- Top Header Bar ----
+                // Top Header Bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -169,7 +202,7 @@ fun MainDashboardScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "SMART FAN",
-                                color = TextPrimary,
+                                color = textPrimaryColor,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 1.2.sp
@@ -196,12 +229,11 @@ fun MainDashboardScreen(
                         }
                         Text(
                             text = "Liquid Glass Cooling Studio",
-                            color = TextSecondary,
+                            color = textSecondaryColor,
                             fontSize = 11.sp
                         )
                     }
 
-                    // Connection Badge Pill
                     val statusText: String
                     val statusColor: Color
                     val statusIcon: androidx.compose.ui.graphics.vector.ImageVector
@@ -233,7 +265,7 @@ fun MainDashboardScreen(
                             .clip(CircleShape)
                             .background(statusColor.copy(alpha = 0.18f))
                             .clickable { showConnectionModal = true }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
@@ -261,7 +293,7 @@ fun MainDashboardScreen(
 
                 Spacer(Modifier.height(14.dp))
 
-                // ---- Main Switchable Tabs Content ----
+                // Content View for 4 tabs
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -274,19 +306,19 @@ fun MainDashboardScreen(
                     ) { tabIndex ->
                         when (tabIndex) {
                             0 -> {
-                                // Status / Dashboard Tab
+                                // 1. Dashboard Tab
                                 LazyColumn(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                    contentPadding = PaddingValues(bottom = 96.dp)
                                 ) {
-                                    // 1. Tachometer RPM Hero Glass Card
                                     item {
                                         LiquidGlassCard(
-                                            backdrop = backdrop,
+                                            backdrop = backgroundBackdrop,
                                             modifier = Modifier.fillMaxWidth(),
                                             contentPadding = 20.dp,
-                                            shape = RoundedCornerShape(28.dp)
+                                            shape = RoundedCornerShape(28.dp),
+                                            isDarkTheme = isDark
                                         ) {
                                             Column(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -294,70 +326,74 @@ fun MainDashboardScreen(
                                             ) {
                                                 RpmGauge(
                                                     fanState = fanState,
-                                                    size = 230.dp
+                                                    size = 230.dp,
+                                                    isDarkTheme = isDark
                                                 )
                                             }
                                         }
                                     }
 
-                                    // 2. PC Telemetry Section
                                     item {
                                         PcTelemetrySection(
                                             pcStats = pcStats,
-                                            backdrop = backdrop
+                                            backdrop = backgroundBackdrop,
+                                            isDarkTheme = isDark
                                         )
                                     }
 
-                                    // 3. Quick Fan Switch
                                     item {
                                         FanControlSection(
                                             fanState = fanState,
                                             onSpeedChange = viewModel::onFanSpeedChange,
                                             onPowerToggle = viewModel::onFanPowerToggle,
                                             onPresetSelect = viewModel::onFanPresetSelect,
-                                            backdrop = backdrop
-                                        )
-                                    }
-                                }
-                            }
-
-                            1 -> {
-                                // Cooling / Fan Control Tab
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    contentPadding = PaddingValues(bottom = 90.dp)
-                                ) {
-                                    item {
-                                        FanControlSection(
-                                            fanState = fanState,
-                                            onSpeedChange = viewModel::onFanSpeedChange,
-                                            onPowerToggle = viewModel::onFanPowerToggle,
-                                            onPresetSelect = viewModel::onFanPresetSelect,
-                                            backdrop = backdrop
+                                            backdrop = backgroundBackdrop,
+                                            isDarkTheme = isDark
                                         )
                                     }
 
                                     item {
                                         LiquidGlassCard(
-                                            backdrop = backdrop,
+                                            backdrop = backgroundBackdrop,
                                             modifier = Modifier.fillMaxWidth(),
                                             contentPadding = 18.dp,
-                                            shape = RoundedCornerShape(24.dp)
+                                            shape = RoundedCornerShape(24.dp),
+                                            isDarkTheme = isDark
                                         ) {
-                                            Column {
-                                                Text(
-                                                    text = "PWM CLOSED-LOOP CONTROL",
-                                                    color = TextPrimary,
-                                                    fontSize = 13.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 0.8.sp
-                                                )
-                                                Spacer(Modifier.height(8.dp))
-                                                Text(
-                                                    text = "Tachometer feedback is synchronized with the ESP32 closed-loop PID controller for maximum cooling efficiency.",
-                                                    color = TextSecondary,
-                                                    fontSize = 12.sp
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.Tune,
+                                                            contentDescription = "PID",
+                                                            tint = NeonCyan,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                        Spacer(Modifier.width(6.dp))
+                                                        Text(
+                                                            text = "CLOSED-LOOP PID SYNC",
+                                                            color = textPrimaryColor,
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            letterSpacing = 0.8.sp
+                                                        )
+                                                    }
+                                                    Spacer(Modifier.height(4.dp))
+                                                    Text(
+                                                        text = "Tachometer feedback dynamically stabilizes fan RPM according to CPU/GPU thermal demand.",
+                                                        color = textSecondaryColor,
+                                                        fontSize = 11.sp
+                                                    )
+                                                }
+                                                Spacer(Modifier.width(12.dp))
+                                                LiquidToggle(
+                                                    selected = { autoPidControl },
+                                                    onSelect = { autoPidControl = it },
+                                                    backdrop = backgroundBackdrop
                                                 )
                                             }
                                         }
@@ -365,12 +401,12 @@ fun MainDashboardScreen(
                                 }
                             }
 
-                            2 -> {
-                                // Lighting / RGB Studio Tab
+                            1 -> {
+                                // 2. Lighting Tab
                                 LazyColumn(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                    contentPadding = PaddingValues(bottom = 96.dp)
                                 ) {
                                     item {
                                         RgbControlSection(
@@ -379,30 +415,31 @@ fun MainDashboardScreen(
                                             onColorSelect = viewModel::onRgbColorChange,
                                             onBrightnessChange = viewModel::onRgbBrightnessChange,
                                             onPowerToggle = viewModel::onRgbPowerToggle,
-                                            backdrop = backdrop
+                                            backdrop = backgroundBackdrop
                                         )
                                     }
                                 }
                             }
 
-                            3 -> {
-                                // Device / Connection Tab
+                            2 -> {
+                                // 3. Device Tab
                                 LazyColumn(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                                    contentPadding = PaddingValues(bottom = 90.dp)
+                                    contentPadding = PaddingValues(bottom = 96.dp)
                                 ) {
                                     item {
                                         LiquidGlassCard(
-                                            backdrop = backdrop,
+                                            backdrop = backgroundBackdrop,
                                             modifier = Modifier.fillMaxWidth(),
                                             contentPadding = 20.dp,
-                                            shape = RoundedCornerShape(26.dp)
+                                            shape = RoundedCornerShape(26.dp),
+                                            isDarkTheme = isDark
                                         ) {
                                             Column {
                                                 Text(
                                                     text = "DEVICE CONNECTION",
-                                                    color = TextPrimary,
+                                                    color = textPrimaryColor,
                                                     fontSize = 14.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     letterSpacing = 0.8.sp
@@ -410,7 +447,7 @@ fun MainDashboardScreen(
                                                 Spacer(Modifier.height(6.dp))
                                                 Text(
                                                     text = "Connect directly to your ESP32-S3 Smart Fan Hub via Bluetooth Low Energy (BLE) or high-speed Wi-Fi WebSocket.",
-                                                    color = TextSecondary,
+                                                    color = textSecondaryColor,
                                                     fontSize = 12.sp
                                                 )
                                                 Spacer(Modifier.height(16.dp))
@@ -424,19 +461,19 @@ fun MainDashboardScreen(
                                                             showConnectionModal = true
                                                             requestBleAndScan()
                                                         },
-                                                        backdrop = backdrop,
+                                                        backdrop = backgroundBackdrop,
                                                         modifier = Modifier.weight(1f)
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Rounded.QrCodeScanner,
                                                             contentDescription = "Scan",
-                                                            tint = Color.White,
+                                                            tint = textPrimaryColor,
                                                             modifier = Modifier.size(18.dp)
                                                         )
                                                         Spacer(Modifier.width(6.dp))
                                                         Text(
                                                             text = if (isScanning) "Scanning..." else "Scan BLE",
-                                                            color = Color.White,
+                                                            color = textPrimaryColor,
                                                             fontSize = 13.sp,
                                                             fontWeight = FontWeight.SemiBold
                                                         )
@@ -444,7 +481,7 @@ fun MainDashboardScreen(
 
                                                     LiquidButton(
                                                         onClick = { viewModel.toggleDemoSimulation() },
-                                                        backdrop = backdrop,
+                                                        backdrop = backgroundBackdrop,
                                                         tint = NeonPurple,
                                                         modifier = Modifier.weight(1f)
                                                     ) {
@@ -469,14 +506,315 @@ fun MainDashboardScreen(
                                 }
                             }
 
-                            4 -> {
-                                // Full Kyant0 Backdrop Catalog Showcase!
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(bottom = 80.dp)
+                            3 -> {
+                                // 4. Settings Tab
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                    contentPadding = PaddingValues(bottom = 96.dp)
                                 ) {
-                                    MainContent()
+                                    // 1. Theme Setting
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backgroundBackdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 20.dp,
+                                            shape = RoundedCornerShape(26.dp),
+                                            isDarkTheme = isDark
+                                        ) {
+                                            Column {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.DarkMode,
+                                                        contentDescription = "Theme",
+                                                        tint = NeonCyan,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(Modifier.width(10.dp))
+                                                    Text(
+                                                        text = "GIAO DIỆN & MÀU NỀN",
+                                                        color = textPrimaryColor,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        letterSpacing = 0.8.sp
+                                                    )
+                                                }
+
+                                                Spacer(Modifier.height(14.dp))
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Column {
+                                                        Text(
+                                                            text = "Theo hệ thống (System Default)",
+                                                            color = textPrimaryColor,
+                                                            fontSize = 13.sp,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                        Text(
+                                                            text = if (themeMode == AppThemeMode.SYSTEM) "Đang bật: tự đổi theo cài đặt Android" else "Đang tắt",
+                                                            color = textSecondaryColor,
+                                                            fontSize = 11.sp
+                                                        )
+                                                    }
+
+                                                    LiquidToggle(
+                                                        selected = { themeMode == AppThemeMode.SYSTEM },
+                                                        onSelect = { isSystem ->
+                                                            themeMode = if (isSystem) AppThemeMode.SYSTEM else if (isDark) AppThemeMode.DARK else AppThemeMode.LIGHT
+                                                        },
+                                                        backdrop = backgroundBackdrop
+                                                    )
+                                                }
+
+                                                Spacer(Modifier.height(14.dp))
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(38.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                if (themeMode == AppThemeMode.SYSTEM) NeonCyan.copy(alpha = 0.25f)
+                                                                else if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                                                            )
+                                                            .border(
+                                                                width = 1.dp,
+                                                                color = if (themeMode == AppThemeMode.SYSTEM) NeonCyan else Color.Transparent,
+                                                                shape = CircleShape
+                                                            )
+                                                            .clickable { themeMode = AppThemeMode.SYSTEM },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                imageVector = Icons.Rounded.PhoneAndroid,
+                                                                contentDescription = "System",
+                                                                tint = if (themeMode == AppThemeMode.SYSTEM) NeonCyan else textSecondaryColor,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                            Spacer(Modifier.width(6.dp))
+                                                            Text(
+                                                                text = "Hệ thống",
+                                                                color = if (themeMode == AppThemeMode.SYSTEM) NeonCyan else textSecondaryColor,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                        }
+                                                    }
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(38.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                if (themeMode == AppThemeMode.LIGHT) NeonCyan.copy(alpha = 0.25f)
+                                                                else if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                                                            )
+                                                            .border(
+                                                                width = 1.dp,
+                                                                color = if (themeMode == AppThemeMode.LIGHT) NeonCyan else Color.Transparent,
+                                                                shape = CircleShape
+                                                            )
+                                                            .clickable { themeMode = AppThemeMode.LIGHT },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                imageVector = Icons.Rounded.LightMode,
+                                                                contentDescription = "Light",
+                                                                tint = if (themeMode == AppThemeMode.LIGHT) NeonCyan else textSecondaryColor,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                            Spacer(Modifier.width(6.dp))
+                                                            Text(
+                                                                text = "Sáng",
+                                                                color = if (themeMode == AppThemeMode.LIGHT) NeonCyan else textSecondaryColor,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                        }
+                                                    }
+
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(38.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                if (themeMode == AppThemeMode.DARK) NeonCyan.copy(alpha = 0.25f)
+                                                                else if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+                                                            )
+                                                            .border(
+                                                                width = 1.dp,
+                                                                color = if (themeMode == AppThemeMode.DARK) NeonCyan else Color.Transparent,
+                                                                shape = CircleShape
+                                                            )
+                                                            .clickable { themeMode = AppThemeMode.DARK },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(
+                                                                imageVector = Icons.Rounded.DarkMode,
+                                                                contentDescription = "Dark",
+                                                                tint = if (themeMode == AppThemeMode.DARK) NeonCyan else textSecondaryColor,
+                                                                modifier = Modifier.size(16.dp)
+                                                            )
+                                                            Spacer(Modifier.width(6.dp))
+                                                            Text(
+                                                                text = "Tối",
+                                                                color = if (themeMode == AppThemeMode.DARK) NeonCyan else textSecondaryColor,
+                                                                fontSize = 11.sp,
+                                                                fontWeight = FontWeight.SemiBold
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // 2. Hardware Alerts Setting
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backgroundBackdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 20.dp,
+                                            shape = RoundedCornerShape(26.dp),
+                                            isDarkTheme = isDark
+                                        ) {
+                                            Column {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.NotificationsActive,
+                                                        contentDescription = "Alerts",
+                                                        tint = CrimsonAlert,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(Modifier.width(10.dp))
+                                                    Text(
+                                                        text = "CẢNH BÁO NHIỆT ĐỘ PC",
+                                                        color = textPrimaryColor,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        letterSpacing = 0.8.sp
+                                                    )
+                                                }
+
+                                                Spacer(Modifier.height(14.dp))
+
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    Text(
+                                                        text = "Ngưỡng báo động:",
+                                                        color = textSecondaryColor,
+                                                        fontSize = 12.sp
+                                                    )
+                                                    Text(
+                                                        text = "${overheatAlarmTemp.toInt()}°C",
+                                                        color = CrimsonAlert,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+
+                                                Spacer(Modifier.height(8.dp))
+
+                                                LiquidSlider(
+                                                    value = { overheatAlarmTemp },
+                                                    onValueChange = { overheatAlarmTemp = it },
+                                                    valueRange = 60f..100f,
+                                                    visibilityThreshold = 1f,
+                                                    backdrop = backgroundBackdrop
+                                                )
+
+                                                Spacer(Modifier.height(18.dp))
+
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Speed,
+                                                        contentDescription = "Telemetry Rate",
+                                                        tint = ElectricBlue,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(Modifier.width(8.dp))
+                                                    Text(
+                                                        text = "Tần số cập nhật Telemetry:",
+                                                        color = textSecondaryColor,
+                                                        fontSize = 12.sp
+                                                    )
+                                                    Spacer(Modifier.weight(1f))
+                                                    Text(
+                                                        text = "${refreshRateHz.toInt()} Hz",
+                                                        color = ElectricBlue,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+
+                                                Spacer(Modifier.height(8.dp))
+
+                                                LiquidSlider(
+                                                    value = { refreshRateHz },
+                                                    onValueChange = { refreshRateHz = it },
+                                                    valueRange = 5f..60f,
+                                                    visibilityThreshold = 1f,
+                                                    backdrop = backgroundBackdrop
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // 3. Info Card
+                                    item {
+                                        LiquidGlassCard(
+                                            backdrop = backgroundBackdrop,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            contentPadding = 18.dp,
+                                            shape = RoundedCornerShape(22.dp),
+                                            isDarkTheme = isDark
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Info,
+                                                        contentDescription = "Info",
+                                                        tint = textSecondaryColor,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(Modifier.width(8.dp))
+                                                    Column {
+                                                        Text(
+                                                            text = "Smart Fan Cooling Studio",
+                                                            color = textPrimaryColor,
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                        Text(
+                                                            text = "v2.0.0 • Liquid Glass AGSL Engine",
+                                                            color = textSecondaryColor,
+                                                            fontSize = 10.sp
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -484,88 +822,47 @@ fun MainDashboardScreen(
                 }
             }
 
-            // 3. Refined Kyant0 LiquidBottomTabs (5 Tabs)
+            // Exact 4-Tab LiquidBottomTabs with Liquid Glass Material
+            val isLightTheme = !isDark
+            val contentColor = if (isLightTheme) Color.Black else Color.White
+            val airplaneModeIcon = rememberVectorPainter(FlightIcon)
+            val iconColorFilter = ColorFilter.tint(contentColor)
+
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp)
+                    .padding(bottom = 18.dp)
             ) {
                 LiquidBottomTabs(
                     selectedTabIndex = { selectedTabIndex },
                     onTabSelected = { selectedTabIndex = it },
-                    backdrop = backdrop,
-                    tabsCount = 5
+                    backdrop = backgroundBackdrop,
+                    tabsCount = 4,
+                    modifier = Modifier.padding(horizontal = 36.dp)
                 ) {
-                    LiquidBottomTab(onClick = { selectedTabIndex = 0 }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Dashboard,
-                            contentDescription = "Status",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Status",
-                            fontSize = 9.sp,
-                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-
-                    LiquidBottomTab(onClick = { selectedTabIndex = 1 }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Toys,
-                            contentDescription = "Cooling",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Cooling",
-                            fontSize = 9.sp,
-                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-
-                    LiquidBottomTab(onClick = { selectedTabIndex = 2 }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Palette,
-                            contentDescription = "Lighting",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Lighting",
-                            fontSize = 9.sp,
-                            fontWeight = if (selectedTabIndex == 2) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-
-                    LiquidBottomTab(onClick = { selectedTabIndex = 3 }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Bluetooth,
-                            contentDescription = "Device",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Device",
-                            fontSize = 9.sp,
-                            fontWeight = if (selectedTabIndex == 3) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-
-                    LiquidBottomTab(onClick = { selectedTabIndex = 4 }) {
-                        Icon(
-                            imageVector = Icons.Rounded.AutoAwesome,
-                            contentDescription = "Catalog",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Catalog",
-                            fontSize = 9.sp,
-                            fontWeight = if (selectedTabIndex == 4) FontWeight.Bold else FontWeight.Normal
-                        )
+                    repeat(4) { index ->
+                        LiquidBottomTab(onClick = { selectedTabIndex = index }) {
+                            Box(
+                                Modifier
+                                    .size(28.dp)
+                                    .paint(airplaneModeIcon, colorFilter = iconColorFilter)
+                            )
+                            BasicText(
+                                when (index) {
+                                    0 -> "Dashboard"
+                                    1 -> "Lighting"
+                                    2 -> "Device"
+                                    else -> "Settings"
+                                },
+                                style = TextStyle(contentColor, 12.sp)
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Connection Bottom Sheet Modal
         ConnectionModal(
             isOpen = showConnectionModal,
             onDismiss = { showConnectionModal = false },

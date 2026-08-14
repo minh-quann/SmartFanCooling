@@ -1,6 +1,7 @@
 package com.buwin.smartfancooling.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Memory
-import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material.icons.rounded.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,19 +34,17 @@ import com.buwin.smartfancooling.data.model.PcStats
 import com.buwin.smartfancooling.ui.theme.AmberWarning
 import com.buwin.smartfancooling.ui.theme.CrimsonAlert
 import com.buwin.smartfancooling.ui.theme.EmeraldGreen
-import com.buwin.smartfancooling.ui.theme.NeonCyan
-import com.buwin.smartfancooling.ui.theme.TextPrimary
-import com.buwin.smartfancooling.ui.theme.TextSecondary
 import com.kyant.backdrop.Backdrop
 
 /**
- * Telemetry row showing CPU and GPU temperatures and loads in glass cards.
+ * Telemetry row showing CPU and GPU temperatures and loads in liquid glass cards.
  */
 @Composable
 fun PcTelemetrySection(
     pcStats: PcStats,
     backdrop: Backdrop,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -60,6 +57,7 @@ fun PcTelemetrySection(
             loadPercent = pcStats.cpuUsage,
             icon = Icons.Rounded.Memory,
             backdrop = backdrop,
+            isDarkTheme = isDarkTheme,
             modifier = Modifier.weight(1f)
         )
 
@@ -70,6 +68,7 @@ fun PcTelemetrySection(
             loadPercent = pcStats.gpuUsage,
             icon = Icons.Rounded.VideogameAsset,
             backdrop = backdrop,
+            isDarkTheme = isDarkTheme,
             modifier = Modifier.weight(1f)
         )
     }
@@ -82,8 +81,12 @@ fun HardwareStatCard(
     loadPercent: Float,
     icon: ImageVector,
     backdrop: Backdrop,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean = isSystemInDarkTheme()
 ) {
+    val textPrimary = if (isDarkTheme) Color.White else Color(0xFF0F172A)
+    val textSecondary = if (isDarkTheme) Color(0xFF94A3B8) else Color(0xFF64748B)
+
     val heatColor = when {
         temp <= 0f -> Color(0xFF64748B)
         temp < 55f -> EmeraldGreen
@@ -95,7 +98,8 @@ fun HardwareStatCard(
         backdrop = backdrop,
         modifier = modifier,
         contentPadding = 14.dp,
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(20.dp),
+        isDarkTheme = isDarkTheme
     ) {
         Column {
             // Header: Icon + Title
@@ -122,7 +126,7 @@ fun HardwareStatCard(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = title,
-                        color = TextSecondary,
+                        color = textSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.8.sp
@@ -146,7 +150,7 @@ fun HardwareStatCard(
             ) {
                 Text(
                     text = if (temp > 0f) String.format("%.1f", temp) else "--",
-                    color = TextPrimary,
+                    color = textPrimary,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp
@@ -170,12 +174,12 @@ fun HardwareStatCard(
             ) {
                 Text(
                     text = "Load",
-                    color = TextSecondary,
+                    color = textSecondary,
                     fontSize = 11.sp
                 )
                 Text(
                     text = if (loadPercent > 0f) "${loadPercent.toInt()}%" else "--",
-                    color = TextPrimary,
+                    color = textPrimary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -190,7 +194,7 @@ fun HardwareStatCard(
                     .height(5.dp)
                     .clip(RoundedCornerShape(3.dp)),
                 color = heatColor,
-                trackColor = Color.White.copy(alpha = 0.08f),
+                trackColor = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f),
                 strokeCap = StrokeCap.Round
             )
         }

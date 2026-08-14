@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,16 +19,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.buwin.smartfancooling.R
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -64,33 +64,16 @@ fun BackdropDemoScaffold(
 
         val backdrop = rememberLayerBackdrop()
 
-        if (painter != null) {
-            Image(
-                painter!!,
-                null,
-                Modifier
-                    .layerBackdrop(backdrop)
-                    .then(modifier)
-                    .fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                Modifier
-                    .layerBackdrop(backdrop)
-                    .then(modifier)
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF0F2027),
-                                Color(0xFF203A43),
-                                Color(0xFF2C5364)
-                            )
-                        )
-                    )
-            )
-        }
+        // Always render Image with wallpaper default, matching original library behavior
+        Image(
+            painter ?: painterResource(R.drawable.wallpaper_light),
+            null,
+            Modifier
+                .layerBackdrop(backdrop)
+                .then(modifier)
+                .fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
         content(backdrop)
 
